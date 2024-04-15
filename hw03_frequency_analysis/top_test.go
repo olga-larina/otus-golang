@@ -7,7 +7,7 @@ import (
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -78,5 +78,36 @@ func TestTop10(t *testing.T) {
 			}
 			require.Equal(t, expected, Top10(text))
 		}
+	})
+
+	t.Run("ignore different register and punctuation", func(t *testing.T) {
+		expected := []string{
+			"нога", // 6
+		}
+		require.Equal(t, expected, Top10("нога! нога нога, 'нога' НОГА Нога"))
+	})
+
+	t.Run("do not ignore hyphen", func(t *testing.T) {
+		expected := []string{
+			"какой-то", // 1
+			"какойто",  // 1
+		}
+		require.Equal(t, expected, Top10("какой-то какойто"))
+	})
+
+	t.Run("punctuation split the words", func(t *testing.T) {
+		expected := []string{
+			"cat",    // 2
+			"dog",    // 2
+			"dogcat", // 1
+		}
+		require.Equal(t, expected, Top10("dog,cat dog...cat dogcat"))
+	})
+
+	t.Run("one hyphen is not the word and many hyphens are the word", func(t *testing.T) {
+		expected := []string{
+			"-------", // 1
+		}
+		require.Equal(t, expected, Top10("- - - - - -------"))
 	})
 }
