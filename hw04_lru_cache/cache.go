@@ -41,13 +41,14 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 		return true
 	}
 
-	createdItem := c.queue.PushFront(&entry{key: key, value: value})
-	c.items[key] = createdItem
-	if c.queue.Len() > c.capacity {
+	if c.queue.Len() == c.capacity {
 		backItem := c.queue.Back()
 		c.queue.Remove(backItem)
 		delete(c.items, entryFromItem(backItem).key)
 	}
+
+	createdItem := c.queue.PushFront(&entry{key: key, value: value})
+	c.items[key] = createdItem
 
 	return false
 }
@@ -70,13 +71,8 @@ func (c *lruCache) Clear() {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
-	clear(c.items)
-	for i := c.queue.Front(); i != nil; i = i.Next {
-		c.queue.Remove(i)
-	}
-
-	// c.queue = NewList()
-	// c.items = make(map[Key]*ListItem, c.capacity)
+	c.queue = NewList()
+	c.items = make(map[Key]*ListItem, c.capacity)
 }
 
 func entryFromItem(item *ListItem) *entry {
