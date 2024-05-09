@@ -16,16 +16,21 @@ func Run(tasks []Task, n, m int) error {
 		return ErrErrorsLimitExceeded
 	}
 
-	// ошибка, может быть записана 1 раз
-	var err error
-	errSync := &sync.Once{}
+	// сигнал окончания обработки
+	stopChan := make(chan struct{})
 
-	// помещаем задачи в канал и закрываем его
-	tasksChan := make(chan Task, len(tasks))
-	for _, task := range tasks {
-		tasksChan <- task
-	}
-	close(tasksChan)
+	// помещаем задачи в канал, когда есть место, или завершаем работу при получении сигнала
+	tasksChan := make(chan Task)
+	go func() {
+		defer close(tasksChan)
+		for _, task := range tasks {
+			select {
+			case <-stopChan:
+				return
+			case tasksChan <- task:
+			}
+		}
+	}()
 
 	// количество ошибок, обрабатываем атомарно
 	var errCount int64
@@ -42,9 +47,6 @@ func Run(tasks []Task, n, m int) error {
 			defer taskWaitGroup.Done()
 			for task := range tasksChan {
 				if atomic.LoadInt64(&errCount) >= int64(m) {
-					errSync.Do(func() {
-						err = ErrErrorsLimitExceeded
-					})
 					return
 				}
 				if err := task(); err != nil {
@@ -56,5 +58,12 @@ func Run(tasks []Task, n, m int) error {
 
 	// ожидаем завершения выполнения всех горутин
 	taskWaitGroup.Wait()
-	return err
+
+	// сигнал завершения работы
+	close(stopChan)
+
+	if errCount >= int64(m) {
+		return ErrErrorsLimitExceeded
+	}
+	return nil
 }
