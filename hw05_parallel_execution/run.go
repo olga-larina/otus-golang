@@ -3,7 +3,6 @@ package hw05parallelexecution
 import (
 	"errors"
 	"sync"
-	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -15,42 +14,49 @@ func Run(tasks []Task, n, m int) error {
 	if m <= 0 { // максимум 0 ошибок
 		return ErrErrorsLimitExceeded
 	}
+	if len(tasks) == 0 {
+		return nil
+	}
 
-	// сигнал окончания обработки
-	stopChan := make(chan struct{})
+	// итоговая ошибка
+	var err error
 
-	// помещаем задачи в канал, когда есть место, или завершаем работу при получении сигнала
+	// канал ошибок
+	errChan := make(chan error, m)
+	defer close(errChan)
+
+	// помещаем задачи в канал, когда есть место, или завершаем работу при превышении количества ошибок
 	tasksChan := make(chan Task)
 	go func() {
 		defer close(tasksChan)
-		for _, task := range tasks {
+
+		errCount := 0
+		taskIdx := 0
+		for taskIdx < len(tasks) {
 			select {
-			case <-stopChan:
-				return
-			case tasksChan <- task:
+			case <-errChan:
+				errCount++
+				if errCount >= m {
+					err = ErrErrorsLimitExceeded
+					return
+				}
+			case tasksChan <- tasks[taskIdx]:
+				taskIdx++
 			}
 		}
 	}()
 
-	// количество ошибок, обрабатываем атомарно
-	var errCount int64
-
 	// запускаем n горутин, добавляем в WaitGroup
 	// в каждой горутине читаем задания из канала до тех пор, пока он не будет закрыт
-	// если выполнение задачи завершилось ошибкой, то увеличиваем счётчик ошибок
-	// перед запуском каждой задачи проверяем, не превышено ли количество ошибок
-	// если превышено, то записываем ошибку и завершаем горутину
+	// если выполнение задачи завершилось ошибкой, то отправляем ошибку в канал ошибок
 	taskWaitGroup := &sync.WaitGroup{}
 	for i := 0; i < n; i++ {
 		taskWaitGroup.Add(1)
 		go func() {
 			defer taskWaitGroup.Done()
 			for task := range tasksChan {
-				if atomic.LoadInt64(&errCount) >= int64(m) {
-					return
-				}
 				if err := task(); err != nil {
-					atomic.AddInt64(&errCount, 1)
+					errChan <- err
 				}
 			}
 		}()
@@ -59,11 +65,5 @@ func Run(tasks []Task, n, m int) error {
 	// ожидаем завершения выполнения всех горутин
 	taskWaitGroup.Wait()
 
-	// сигнал завершения работы
-	close(stopChan)
-
-	if errCount >= int64(m) {
-		return ErrErrorsLimitExceeded
-	}
-	return nil
+	return err
 }
