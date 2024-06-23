@@ -1,0 +1,16 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/olga-larina/otus-golang/hw10_program_optimization
+BenchmarkStats
+BenchmarkStats-12    	       3	 341029861 ns/op	323329805 B/op	 3045403 allocs/op
+BenchmarkStats-12    	       3	 344261181 ns/op	323317245 B/op	 3045399 allocs/op
+BenchmarkStats-12    	       3	 341411486 ns/op	323292810 B/op	 3045398 allocs/op
+BenchmarkStats-12    	       3	 338437375 ns/op	323293066 B/op	 3045400 allocs/op
+BenchmarkStats-12    	       3	 338616861 ns/op	323268608 B/op	 3045399 allocs/op
+BenchmarkStats-12    	       3	 339366806 ns/op	323280160 B/op	 3045396 allocs/op
+BenchmarkStats-12    	       3	 340631667 ns/op	323342213 B/op	 3045403 allocs/op
+BenchmarkStats-12    	       3	 337980041 ns/op	323354986 B/op	 3045406 allocs/op
+BenchmarkStats-12    	       3	 338938903 ns/op	323243701 B/op	 3045396 allocs/op
+BenchmarkStats-12    	       3	 337215583 ns/op	323305818 B/op	 3045404 allocs/op
+PASS
+ok  	github.com/olga-larina/otus-golang/hw10_program_optimization	20.572s
