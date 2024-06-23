@@ -10,13 +10,7 @@ import (
 )
 
 type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
+	Email string
 }
 
 type DomainStat map[string]int
@@ -53,5 +47,9 @@ func domainByFirstLevel(email string, domainFirstLevel string) (bool, string) {
 	if !matched {
 		return false, ""
 	}
-	return true, strings.ToLower(strings.SplitN(email, "@", 2)[1])
+	splitted := strings.SplitN(email, "@", 2)
+	if len(splitted) < 2 {
+		return false, ""
+	}
+	return true, strings.ToLower(splitted[1])
 }
