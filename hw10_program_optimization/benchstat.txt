@@ -1,0 +1,14 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/olga-larina/otus-golang/hw10_program_optimization
+         │   old.txt   │               new.txt               │
+         │   sec/op    │   sec/op     vs base                │
+Stats-12   339.2m ± 1%   125.5m ± 2%  -63.01% (p=0.000 n=10)
+
+         │    old.txt    │               new.txt                │
+         │     B/op      │     B/op      vs base                │
+Stats-12   308.32Mi ± 0%   10.76Mi ± 0%  -96.51% (p=0.000 n=10)
+
+         │   old.txt   │               new.txt               │
+         │  allocs/op  │  allocs/op   vs base                │
+Stats-12   3.045M ± 0%   1.423M ± 0%  -53.27% (p=0.000 n=10)
