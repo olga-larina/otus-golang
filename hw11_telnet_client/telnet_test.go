@@ -62,4 +62,35 @@ func TestTelnetClient(t *testing.T) {
 
 		wg.Wait()
 	})
+
+	t.Run("fail when no server", func(t *testing.T) {
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		client := NewTelnetClient("127.0.0.1:", timeout, io.NopCloser(in), out)
+		require.Error(t, client.Connect())
+	})
+
+	t.Run("stop when server closes connection", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:")
+		require.NoError(t, err)
+		defer l.Close()
+
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		client := NewTelnetClient(l.Addr().String(), timeout, io.NopCloser(in), out)
+		require.NoError(t, client.Connect())
+		defer func() { require.NoError(t, client.Close()) }()
+
+		require.NoError(t, l.Close())
+
+		require.Error(t, client.Receive())
+	})
 }
