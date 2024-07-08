@@ -1,1 +1,28 @@
 version: "3"
+services:
+  db:
+    image: postgres:16.2-alpine3.19
+    environment:
+      - POSTGRES_USER=otus
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=calendar
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - calendar-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U otus -d calendar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+volumes:
+  calendar-data:

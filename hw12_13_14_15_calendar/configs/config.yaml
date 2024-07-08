@@ -1,0 +1,19 @@
+# Logger config
+logger:
+  level: "INFO"
+# Server config
+server:
+  host: "127.0.0.1"
+  port: "8080"
+  readTimeout: "5s"
+# Database config
+database:
+  driver: "pgx"
+  dsnPrefix: "postgres"
+  host: "127.0.0.1"
+  port: "5432"
+  username: "otus"
+  password: "password"
+  dbname: "calendar"
+# Storage type
+storage: "MEMORY" # SQL / MEMORY

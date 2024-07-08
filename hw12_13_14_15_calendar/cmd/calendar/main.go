@@ -3,21 +3,23 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
+	"fmt"
+	"log"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/app"
+	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "/etc/calendar/config.yaml", "Path to configuration file")
 }
 
 func main() {
@@ -28,17 +30,48 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	config, err := NewConfig(configFile)
+	if err != nil {
+		log.Fatalf("failed reading config %v", err)
+		return
+	}
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
-
-	server := internalhttp.NewServer(logg, calendar)
+	logg, err := logger.New(config.Logger.Level)
+	if err != nil {
+		log.Fatalf("failed building logger %v", err)
+		return
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
+
+	var storage app.Storage
+	if config.StorageType == "SQL" {
+		dbDsn := fmt.Sprintf(
+			"%s://%s:%s@%s:%s/%s",
+			config.Database.DsnPrefix,
+			config.Database.Username,
+			config.Database.Password,
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.DBName,
+		)
+		sqlStorage := sqlstorage.New(config.Database.Driver, dbDsn)
+		if err := sqlStorage.Connect(ctx); err != nil {
+			logg.Error(ctx, err, "failed to connect to db")
+			return
+		}
+		defer sqlStorage.Close(ctx)
+		storage = sqlStorage
+	} else {
+		storage = memorystorage.New()
+	}
+
+	calendar := app.New(logg, storage)
+
+	serverAddr := fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port)
+	server := internalhttp.NewServer(logg, calendar, serverAddr, config.Server.ReadTimeout)
 
 	go func() {
 		<-ctx.Done()
@@ -47,15 +80,13 @@ func main() {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			logg.Error(ctx, err, "failed to stop http server")
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	logg.Info(ctx, "calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
+		logg.Error(ctx, err, "http server stopped")
 	}
 }
