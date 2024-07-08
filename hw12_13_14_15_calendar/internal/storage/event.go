@@ -1,7 +1,13 @@
 package storage
 
+import "time"
+
 type Event struct {
-	ID    string
-	Title string
-	// TODO
+	ID           int64         `db:"event_id"`
+	Title        string        `db:"title"`
+	StartDate    time.Time     `db:"start_date"`
+	EndDate      time.Time     `db:"end_date"`
+	Description  string        `db:"description"`
+	UserID       int64         `db:"user_id"`
+	NotifyBefore time.Duration `db:"notify_before"`
 }
