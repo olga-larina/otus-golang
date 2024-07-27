@@ -12,9 +12,9 @@ import (
 
 type Server struct {
 	logger      Logger
-	app         Application
 	addr        string
 	readTimeout time.Duration
+	handler     *EventHandler
 	srv         *http.Server
 }
 
@@ -26,21 +26,21 @@ type Logger interface {
 }
 
 type Application interface {
-	CreateEvent(ctx context.Context, eventDto app.EventDto) (int64, error)
-	GetByID(ctx context.Context, eventID int64) (*app.EventDto, error)
+	Create(ctx context.Context, eventDto app.EventDto) (uint64, error)
+	GetByID(ctx context.Context, userID uint64, eventID uint64) (*app.EventDto, error)
 	Update(ctx context.Context, eventDto app.EventDto) error
-	Delete(ctx context.Context, eventID int64) error
-	ListForDay(ctx context.Context, date time.Time) ([]*app.EventDto, error)
-	ListForWeek(ctx context.Context, startDate time.Time) ([]*app.EventDto, error)
-	ListForMonth(ctx context.Context, startDate time.Time) ([]*app.EventDto, error)
+	Delete(ctx context.Context, userID uint64, eventID uint64) error
+	ListForDay(ctx context.Context, userID uint64, date time.Time) ([]*app.EventDto, error)
+	ListForWeek(ctx context.Context, userID uint64, startDate time.Time) ([]*app.EventDto, error)
+	ListForMonth(ctx context.Context, userID uint64, startDate time.Time) ([]*app.EventDto, error)
 }
 
 func NewServer(logger Logger, app Application, addr string, readTimeout time.Duration) *Server {
 	return &Server{
 		logger:      logger,
-		app:         app,
 		addr:        addr,
 		readTimeout: readTimeout,
+		handler:     NewEventHandler(logger, app),
 	}
 }
 
@@ -48,7 +48,25 @@ func (s *Server) Start(ctx context.Context) error {
 	s.logger.Info(ctx, "starting http server")
 
 	mux := mux.NewRouter()
-	mux.Handle("/hello", loggingMiddleware(ctx, s.logger, http.HandlerFunc(helloHandler))).Methods("GET")
+
+	mux.Handle("/hello", loggingMiddleware(ctx, s.logger, http.HandlerFunc(s.helloHandler))).Methods("GET")
+
+	mux.Handle("/events", loggingMiddleware(ctx, s.logger, http.HandlerFunc(s.handler.create))).Methods("POST")
+	mux.Handle(fmt.Sprintf("/events/{%s}", eventIDPath), loggingMiddleware(ctx, s.logger, http.HandlerFunc(s.handler.update))).Methods("PUT")
+	mux.Handle(fmt.Sprintf("/events/{%s}", eventIDPath), loggingMiddleware(ctx, s.logger, http.HandlerFunc(s.handler.getByID))).Methods("GET")
+	mux.Handle(fmt.Sprintf("/events/{%s}", eventIDPath), loggingMiddleware(ctx, s.logger, http.HandlerFunc(s.handler.delete))).Methods("DELETE")
+	mux.Handle("/events", loggingMiddleware(ctx, s.logger, http.HandlerFunc(s.handler.listForDay))).Methods("GET").Queries(
+		startDateQueryKey, startDateQueryValue,
+		periodTypeQueryKey, periodDayQueryValue,
+	)
+	mux.Handle("/events", loggingMiddleware(ctx, s.logger, http.HandlerFunc(s.handler.listForWeek))).Methods("GET").Queries(
+		startDateQueryKey, startDateQueryValue,
+		periodTypeQueryKey, periodWeekQueryValue,
+	)
+	mux.Handle("/events", loggingMiddleware(ctx, s.logger, http.HandlerFunc(s.handler.listForMonth))).Methods("GET").Queries(
+		startDateQueryKey, startDateQueryValue,
+		periodTypeQueryKey, periodMonthQueryValue,
+	)
 
 	s.srv = &http.Server{
 		Addr:        s.addr,
@@ -64,6 +82,6 @@ func (s *Server) Stop(ctx context.Context) error {
 	return s.srv.Shutdown(ctx)
 }
 
-func helloHandler(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) helloHandler(w http.ResponseWriter, _ *http.Request) {
 	fmt.Fprintln(w, "hello world")
 }

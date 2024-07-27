@@ -33,7 +33,7 @@ install-lint-deps:
 
 # запустить golangci-lint 
 lint: install-lint-deps
-	golangci-lint run ./...
+	golangci-lint run ./... --fix
 
 .PHONY: build run build-img run-img version test lint
 
@@ -46,3 +46,12 @@ migrate:
 .PHONY: migrate-down
 migrate-down:
 	goose -dir migrations postgres "postgres://otus:password@localhost:5432/calendar" down
+
+# сгенерировать прото
+# необходимо сначала выполнить
+# - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+# - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+# - создать пакет для кода grpc-сервера с go:generate
+.PHONY: generate
+generate: 
+	go generate ./...

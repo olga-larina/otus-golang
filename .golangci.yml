@@ -23,6 +23,8 @@ linters-settings:
         - "$test"        
         allow:
         - $gostd
+  lll:
+    line-length: 150
 
 issues:
   exclude-rules:
