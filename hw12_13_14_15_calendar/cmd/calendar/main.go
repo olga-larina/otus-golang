@@ -11,6 +11,7 @@ import (
 
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/app"
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/storage/sql"
@@ -46,6 +47,7 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
+	// storage
 	var storage app.Storage
 	if config.StorageType == "SQL" {
 		dbDsn := fmt.Sprintf(
@@ -68,10 +70,12 @@ func main() {
 		storage = memorystorage.New()
 	}
 
+	// app
 	calendar := app.New(logg, storage)
 
-	serverAddr := fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port)
-	server := internalhttp.NewServer(logg, calendar, serverAddr, config.Server.ReadTimeout)
+	// http server
+	httpServerAddr := fmt.Sprintf("%s:%s", config.HTTPServer.Host, config.HTTPServer.Port)
+	httpServer := internalhttp.NewServer(logg, calendar, httpServerAddr, config.HTTPServer.ReadTimeout)
 
 	go func() {
 		<-ctx.Done()
@@ -79,14 +83,29 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := httpServer.Stop(ctx); err != nil {
 			logg.Error(ctx, err, "failed to stop http server")
+		}
+	}()
+
+	// grpc server
+	grpcServer := internalgrpc.NewServer(logg, calendar, config.GrpcServer.Port)
+
+	go func() {
+		if err = grpcServer.Start(ctx); err != nil {
+			logg.Error(ctx, err, "grpc failed to serve")
 		}
 	}()
 
 	logg.Info(ctx, "calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
+	if err := httpServer.Start(ctx); err != nil {
 		logg.Error(ctx, err, "http server stopped")
+	}
+
+	<-ctx.Done()
+
+	if err := grpcServer.Stop(ctx); err != nil {
+		logg.Error(ctx, err, "failed to stop grpc server")
 	}
 }

@@ -1,8 +1,11 @@
 # Logger config
 logger:
   level: "INFO"
-# Server config
-server:
+# GRPC server config
+grpcServer:
+  port: "8081"
+# HTTP server config
+httpServer:
   host: "127.0.0.1"
   port: "8080"
   readTimeout: "5s"

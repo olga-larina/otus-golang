@@ -7,13 +7,13 @@ import (
 )
 
 type EventDto struct {
-	ID           int64
-	Title        string
-	StartDate    time.Time
-	EndDate      time.Time
-	Description  string
-	UserID       int64
-	NotifyBefore time.Duration
+	ID           uint64        `json:"id"`
+	Title        string        `json:"title"`
+	StartDate    time.Time     `json:"startDate"`
+	EndDate      time.Time     `json:"endDate"`
+	Description  string        `json:"description"`
+	UserID       uint64        `json:"userId"`
+	NotifyBefore time.Duration `json:"notifyBefore"`
 }
 
 func convertEventToModel(dto *EventDto) *storage.Event {

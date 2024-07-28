@@ -12,17 +12,22 @@ import (
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
-	Logger      LoggerConfig   `yaml:"logger"`
-	Server      ServerConfig   `yaml:"server"`
-	Database    DatabaseConfig `yaml:"database"`
-	StorageType string         `yaml:"storage"`
+	Logger      LoggerConfig     `yaml:"logger"`
+	GrpcServer  GrpcServerConfig `yaml:"grpcServer"`
+	HTTPServer  HTTPServerConfig `yaml:"httpServer"`
+	Database    DatabaseConfig   `yaml:"database"`
+	StorageType string           `yaml:"storage"`
 }
 
 type LoggerConfig struct {
 	Level string `yaml:"level"`
 }
 
-type ServerConfig struct {
+type GrpcServerConfig struct {
+	Port string `yaml:"port"`
+}
+
+type HTTPServerConfig struct {
 	Host        string        `yaml:"host"`
 	Port        string        `yaml:"port"`
 	ReadTimeout time.Duration `yaml:"readTimeout"`
