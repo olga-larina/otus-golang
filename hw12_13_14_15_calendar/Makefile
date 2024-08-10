@@ -1,41 +1,85 @@
-BIN := "./bin/calendar"
-DOCKER_IMG="calendar:develop"
+BIN_CALENDAR := "./bin/calendar"
+DOCKER_IMG_CALENDAR="calendar:develop"
+
+BIN_SCHEDULER := "./bin/calendar_scheduler"
+DOCKER_IMG_SCHEDULER="calendar_scheduler:develop"
+
+BIN_SENDER := "./bin/calendar_sender"
+DOCKER_IMG_SENDER="calendar_sender:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
-# скомпилировать бинарный файл сервиса
-build:
-	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+# скомпилировать бинарные файлы сервиса
+.PHONY: build_calendar
+build_calendar:
+	go build -v -o $(BIN_CALENDAR) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
-# собрать и запустить сервис с конфигом по умолчанию
-run: build
-	$(BIN) -config ./configs/config.yaml
+.PHONY: build_scheduler
+build_scheduler:
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/scheduler
 
+.PHONY: build_sender
+build_sender:
+	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/sender
+
+.PHONY: build
+build: build_calendar build_scheduler build_sender
+
+# собрать и запустить сервисы с конфигами по умолчанию
+.PHONY: run_calendar
+run_calendar: build_calendar
+	$(BIN_CALENDAR) -config ./configs/calendar_config.yaml
+
+.PHONY: run_scheduler
+run_scheduler: build_scheduler
+	$(BIN_SCHEDULER) -config ./configs/scheduler_config.yaml
+	
+.PHONY: run_sender
+run_sender: build_sender
+	$(BIN_SENDER) -config ./configs/sender_config.yaml
+
+# собрать все образы
+.PHONY: build-img
 build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+		-t $(DOCKER_IMG_CALENDAR) \
+		-f build/calendar/Dockerfile .
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG_SCHEDULER) \
+		-f build/scheduler/Dockerfile .
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG_SENDER) \
+		-f build/sender/Dockerfile .
 
+# запустить все образы
+.PHONY: run-img
 run-img: build-img
-	docker run $(DOCKER_IMG)
+	docker run $(DOCKER_IMG_CALENDAR) -d
+	docker run $(DOCKER_IMG_SCHEDULER) -d
+	docker run $(DOCKER_IMG_SENDER) -d
 
-version: build
-	$(BIN) version
+# посмотреть версию приложения календарь
+.PHONY: version
+version: build_calendar
+	$(BIN_CALENDAR) version
 
 # запустить юнит-тесты
+.PHONY: test
 test:
 	go test -race ./internal/...
 
+# линтер golangci-lint 
+.PHONY: install-lint-deps
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.57.2
 
-# запустить golangci-lint 
+.PHONY: lint
 lint: install-lint-deps
 	golangci-lint run ./... --fix
-
-.PHONY: build run build-img run-img version test lint
 
 # применить миграции
 .PHONY: migrate

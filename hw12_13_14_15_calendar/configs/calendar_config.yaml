@@ -19,4 +19,4 @@ database:
   password: "password"
   dbname: "calendar"
 # Storage type
-storage: "MEMORY" # SQL / MEMORY
+storage: "SQL" # SQL / MEMORY

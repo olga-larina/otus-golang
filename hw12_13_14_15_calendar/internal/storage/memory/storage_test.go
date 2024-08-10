@@ -219,23 +219,22 @@ func TestStorageList(t *testing.T) {
 		EndDate:      getTime(t, "2024-07-10 00:00:00"),
 		Description:  "my event description",
 		UserID:       userID,
-		NotifyBefore: time.Hour * 24,
+		NotifyBefore: time.Hour * 25,
 	}
 
 	event1 := event
 	event1.StartDate = getTime(t, "2024-07-05 10:00:00")
 	event1.EndDate = getTime(t, "2024-07-06 09:59:59")
+	event1.NotifyBefore = 0
 
 	event2 := event
 	event2.StartDate = getTime(t, "2024-07-10 00:00:01")
 	event2.EndDate = getTime(t, "2024-07-10 10:00:00")
-
-	event3 := event
-	event3.StartDate = getTime(t, "2024-07-05 10:00:00")
-	event3.EndDate = getTime(t, "2024-07-10 09:59:59")
+	event2.NotifyBefore = time.Hour * 24 * 4
 
 	eventOther := event
 	eventOther.UserID = uint64(54321)
+	eventOther.EndDate = getTime(t, "2024-07-10 00:00:01")
 
 	ctx := context.Background()
 
@@ -289,6 +288,129 @@ func TestStorageList(t *testing.T) {
 		actualEvents, err := s.ListForPeriod(ctx, userID, getTime(t, "2024-07-05 00:00:00"), getTime(t, "2024-07-05 09:59:59"))
 		require.NoError(t, err)
 		require.Equal(t, 0, len(actualEvents))
+	})
+}
+
+func TestStorageScheduling(t *testing.T) {
+	t.Parallel()
+
+	userID := uint64(12345)
+	event := storage.Event{
+		Title:        "my event",
+		StartDate:    getTime(t, "2024-07-06 10:00:00"),
+		EndDate:      getTime(t, "2024-07-10 00:00:00"),
+		Description:  "my event description",
+		UserID:       userID,
+		NotifyBefore: time.Hour * 25,
+	}
+
+	event1 := event
+	event1.StartDate = getTime(t, "2024-07-05 10:00:00")
+	event1.EndDate = getTime(t, "2024-07-06 09:59:59")
+	event1.NotifyBefore = 0
+
+	event2 := event
+	event2.StartDate = getTime(t, "2024-07-10 00:00:01")
+	event2.EndDate = getTime(t, "2024-07-10 10:00:00")
+	event2.NotifyBefore = time.Hour * 24 * 4
+
+	eventOther := event
+	eventOther.UserID = uint64(54321)
+	eventOther.EndDate = getTime(t, "2024-07-10 00:00:01")
+
+	eventOther1 := event
+	eventOther1.UserID = uint64(32154)
+	eventOther1.StartDate = getTime(t, "2024-07-05 10:00:00")
+	eventOther1.EndDate = getTime(t, "2024-07-10 09:59:59")
+	eventOther1.NotifyBefore = time.Hour
+
+	ctx := context.Background()
+
+	t.Run("list events for notify", func(t *testing.T) {
+		s := New()
+		event := event
+		event1 := event1
+		event2 := event2
+		eventOther1 := eventOther1
+		eventOther := eventOther
+
+		events := []*storage.Event{
+			&eventOther1,
+			&event,
+			&eventOther,
+			&event2,
+			&event1,
+		}
+
+		for i, ev := range events {
+			eventID, err := s.Create(ctx, ev)
+			require.NoError(t, err)
+			events[i].ID = eventID
+		}
+
+		expectedEvents := events[:4]
+
+		actualEvents, err := s.ListForNotify(ctx, getTime(t, "2024-07-05 09:00:00"), getTime(t, "2024-07-06 09:00:00"))
+		require.NoError(t, err)
+		require.EqualValues(t, expectedEvents, actualEvents)
+	})
+
+	t.Run("mark events as notified", func(t *testing.T) {
+		s := New()
+		event := event
+		event1 := event1
+		event2 := event2
+
+		event1ID, err := s.Create(ctx, &event1)
+		require.NoError(t, err)
+
+		event2ID, err := s.Create(ctx, &event2)
+		require.NoError(t, err)
+
+		eventID, err := s.Create(ctx, &event)
+		require.NoError(t, err)
+
+		err = s.MarkAsNotified(ctx, []uint64{event1ID, eventID})
+		require.NoError(t, err)
+
+		actualEvent1, err := s.GetByID(ctx, userID, event1ID)
+		require.NoError(t, err)
+		require.True(t, actualEvent1.Notified)
+
+		actualEvent2, err := s.GetByID(ctx, userID, event2ID)
+		require.NoError(t, err)
+		require.False(t, actualEvent2.Notified)
+
+		actualEvent, err := s.GetByID(ctx, userID, eventID)
+		require.NoError(t, err)
+		require.True(t, actualEvent.Notified)
+	})
+
+	t.Run("delete old events", func(t *testing.T) {
+		s := New()
+
+		event := event
+		event1 := event1
+		event2 := event2
+
+		event1ID, err := s.Create(ctx, &event1)
+		require.NoError(t, err)
+		event1.ID = event1ID
+
+		event2ID, err := s.Create(ctx, &event2)
+		require.NoError(t, err)
+		event2.ID = event2ID
+
+		eventID, err := s.Create(ctx, &event)
+		require.NoError(t, err)
+		event.ID = eventID
+
+		err = s.DeleteByEndDate(ctx, getTime(t, "2024-07-10 00:00:00"))
+		require.NoError(t, err)
+
+		actualEvents, err := s.ListForPeriod(ctx, userID, getTime(t, "2024-07-05 10:00:00"), getTime(t, "2024-07-10 10:00:00"))
+		require.NoError(t, err)
+		require.EqualValues(t, []*storage.Event{&event2}, actualEvents)
 	})
 }
 
