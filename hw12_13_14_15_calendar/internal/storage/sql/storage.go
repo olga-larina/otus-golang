@@ -33,6 +33,10 @@ func (s *Storage) Close(_ context.Context) error {
 	return s.db.Close()
 }
 
+const eventFields = `
+event_id, title, start_date, end_date, description, user_id, CAST(EXTRACT(EPOCH FROM notify_before) * 1000000000 as BIGINT) AS notify_before
+`
+
 const checkExistingEventsSQL = `
 SELECT count(*) FROM events WHERE start_date <= ? AND end_date >= ? AND user_id = ? AND event_id <> ?
 `
@@ -82,7 +86,7 @@ func (s *Storage) Create(ctx context.Context, event *storage.Event) (uint64, err
 }
 
 const getEventByIDSQL = `
-SELECT event_id, title, start_date, end_date, description, user_id, CAST(EXTRACT(EPOCH FROM notify_before) * 1000000000 as BIGINT) AS notify_before
+SELECT ` + eventFields + `
 FROM events
 WHERE event_id = :event_id AND user_id = :user_id
 `
@@ -187,7 +191,7 @@ func (s *Storage) Delete(ctx context.Context, userID uint64, eventID uint64) err
 }
 
 const selectEventsByDatesSQL = `
-SELECT event_id, title, start_date, end_date, description, user_id, CAST(EXTRACT(EPOCH FROM notify_before) * 1000000000 as BIGINT) AS notify_before
+SELECT ` + eventFields + `
 FROM events
 WHERE start_date < :end_date AND end_date >= :start_date AND user_id = :user_id
 ORDER BY start_date, end_date
@@ -223,4 +227,73 @@ func (s *Storage) ListForPeriod(
 		events = append(events, &event)
 	}
 	return events, nil
+}
+
+const selectEventsForNotifySQL = `
+SELECT ` + eventFields + `
+FROM events
+WHERE start_date - notify_before BETWEEN :start_notify_date AND :end_notify_date AND NOT notified
+ORDER BY start_date - notify_before, start_date, end_date
+`
+
+func (s *Storage) ListForNotify(ctx context.Context, startNotifyDate time.Time, endNotifyDate time.Time) ([]*storage.Event, error) {
+	stmt, err := s.db.PrepareNamedContext(ctx, selectEventsForNotifySQL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot prepare context for listing events for notify: %w", err)
+	}
+
+	rows, err := stmt.QueryxContext(ctx, map[string]interface{}{
+		"start_notify_date": startNotifyDate,
+		"end_notify_date":   endNotifyDate,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot query context for listing events for notify: %w", err)
+	}
+
+	events := make([]*storage.Event, 0)
+	for rows.Next() {
+		var event storage.Event
+		err = rows.StructScan(&event)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get result for listing events for notify: %w", err)
+		}
+		events = append(events, &event)
+	}
+	return events, nil
+}
+
+const markAsNotifiedSQL = `
+UPDATE events
+SET notified = true
+WHERE event_id = ANY(:event_ids)
+`
+
+func (s *Storage) MarkAsNotified(ctx context.Context, eventIDs []uint64) error {
+	stmt, err := s.db.PrepareNamedContext(ctx, markAsNotifiedSQL)
+	if err != nil {
+		return fmt.Errorf("cannot prepare context for marking events as notified: %w", err)
+	}
+
+	_, err = stmt.ExecContext(ctx, map[string]interface{}{
+		"event_ids": eventIDs,
+	})
+	return err
+}
+
+const deleteEventsByEndDateSQL = `
+DELETE FROM events
+WHERE end_date <= :max_end_date
+`
+
+func (s *Storage) DeleteByEndDate(ctx context.Context, maxEndDate time.Time) error {
+	stmt, err := s.db.PrepareNamedContext(ctx, deleteEventsByEndDateSQL)
+	if err != nil {
+		return fmt.Errorf("cannot prepare context for deleting events by end date: %w", err)
+	}
+
+	_, err = stmt.ExecContext(ctx, map[string]interface{}{
+		"max_end_date": maxEndDate,
+	})
+
+	return err
 }

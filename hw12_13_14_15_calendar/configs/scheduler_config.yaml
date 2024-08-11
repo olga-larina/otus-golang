@@ -1,0 +1,26 @@
+# Logger config
+logger:
+  level: "DEBUG"
+# Database config
+database:
+  driver: "pgx"
+  dsnPrefix: "postgres"
+  host: "127.0.0.1"
+  port: "5432"
+  username: "otus"
+  password: "password"
+  dbname: "calendar"
+# Queue producer config
+queue:
+  uri: "amqp://rmuser:rmpassword@127.0.0.1:5672/"
+  exchangeName: "calendar-events"
+  exchangeType: "direct" # direct|fanout|topic|x-custom
+  queueName: "notifications-queue"
+  routingKey: "notifications"
+# Schedule config
+schedule:
+  notifyCron: "*/10 * * * * *"
+  clearCron: "*/30 * * * * *"
+  notifyPeriod: "1m" # период для уведомления в будущем
+  notifyScanPeriod: "1h" # период для проверки событий без уведомлений в прошлом
+  clearPeriod: "8760h"
