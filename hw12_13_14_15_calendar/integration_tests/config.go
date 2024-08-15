@@ -1,4 +1,7 @@
-package main
+//go:build integration
+// +build integration
+
+package integration
 
 import (
 	"fmt"
@@ -11,8 +14,7 @@ import (
 type Config struct {
 	Logger   LoggerConfig   `mapstructure:"logger"`
 	Database DatabaseConfig `mapstructure:"database"`
-	Queue    QueueConfig    `mapstructure:"queue"`
-	Schedule ScheduleConfig `mapstructure:"schedule"`
+	Calendar CalendarConfig `mapstructure:"calendar"`
 	Timezone string         `mapstructure:"timezone"`
 }
 
@@ -25,20 +27,14 @@ type DatabaseConfig struct {
 	URI    string `mapstructure:"uri"`
 }
 
-type QueueConfig struct {
-	URI          string `mapstructure:"uri"`
-	ExchangeName string `mapstructure:"exchangeName"`
-	ExchangeType string `mapstructure:"exchangeType"`
-	QueueName    string `mapstructure:"queueName"`
-	RoutingKey   string `mapstructure:"routingKey"`
-}
-
-type ScheduleConfig struct {
-	NotifyCron       string        `mapstructure:"notifyCron"`
-	ClearCron        string        `mapstructure:"clearCron"`
+type CalendarConfig struct {
+	GrpcURL          string        `mapstructure:"grpc_url"`
+	HTTPUrl          string        `mapstructure:"http_url"`
 	NotifyPeriod     time.Duration `mapstructure:"notifyPeriod"`
 	NotifyScanPeriod time.Duration `mapstructure:"notifyScanPeriod"`
 	ClearPeriod      time.Duration `mapstructure:"clearPeriod"`
+	NotifyCronPeriod time.Duration `mapstructure:"notifyCronPeriod"`
+	ClearCronPeriod  time.Duration `mapstructure:"clearCronPeriod"`
 }
 
 func NewConfig(path string) (*Config, error) {

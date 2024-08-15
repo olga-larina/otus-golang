@@ -70,7 +70,7 @@ version: build_calendar
 # запустить юнит-тесты
 .PHONY: test
 test:
-	go test -race ./internal/...
+	go test -race -count=1 ./internal/...
 
 # линтер golangci-lint 
 .PHONY: install-lint-deps
@@ -99,3 +99,20 @@ migrate-down:
 .PHONY: generate
 generate: 
 	go generate ./...
+
+# поднять сервисы и окружение
+.PHONY: up
+up:
+	docker-compose --env-file deployments/.env -f deployments/docker-compose.yaml up -d --build
+
+# потушить сервисы и окружение
+.PHONY: down
+down:
+	docker-compose --env-file deployments/.env -f deployments/docker-compose.yaml down
+
+# запустить интеграционные тесты
+.PHONY: integration-tests
+integration-tests:
+	bash integration_tests/integration_tests.sh; \
+    e=$$?; \
+    exit $$e

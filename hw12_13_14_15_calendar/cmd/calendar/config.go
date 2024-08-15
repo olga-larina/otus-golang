@@ -5,52 +5,56 @@ import (
 	"os"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	"github.com/spf13/viper"
 )
 
 // При желании конфигурацию можно вынести в internal/config.
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
-	Logger      LoggerConfig     `yaml:"logger"`
-	GrpcServer  GrpcServerConfig `yaml:"grpcServer"`
-	HTTPServer  HTTPServerConfig `yaml:"httpServer"`
-	Database    DatabaseConfig   `yaml:"database"`
-	StorageType string           `yaml:"storage"`
+	Logger      LoggerConfig     `mapstructure:"logger"`
+	GrpcServer  GrpcServerConfig `mapstructure:"grpcServer"`
+	HTTPServer  HTTPServerConfig `mapstructure:"httpServer"`
+	Database    DatabaseConfig   `mapstructure:"database"`
+	StorageType string           `mapstructure:"storage"`
+	Timezone    string           `mapstructure:"timezone"`
 }
 
 type LoggerConfig struct {
-	Level string `yaml:"level"`
+	Level string `mapstructure:"level"`
 }
 
 type GrpcServerConfig struct {
-	Port string `yaml:"port"`
+	Port string `mapstructure:"port"`
 }
 
 type HTTPServerConfig struct {
-	Host        string        `yaml:"host"`
-	Port        string        `yaml:"port"`
-	ReadTimeout time.Duration `yaml:"readTimeout"`
+	Host        string        `mapstructure:"host"`
+	Port        string        `mapstructure:"port"`
+	ReadTimeout time.Duration `mapstructure:"readTimeout"`
 }
 
 type DatabaseConfig struct {
-	Driver    string `yaml:"driver"`
-	DsnPrefix string `yaml:"dsnPrefix"`
-	Host      string `yaml:"host"`
-	Port      string `yaml:"port"`
-	Username  string `yaml:"username"`
-	Password  string `yaml:"password"`
-	DBName    string `yaml:"dbname"`
+	Driver string `mapstructure:"driver"`
+	URI    string `mapstructure:"uri"`
 }
 
-func NewConfig(path string) (c *Config, err error) {
-	data, err := os.ReadFile(path)
+func NewConfig(path string) (*Config, error) {
+	parser := viper.New()
+	parser.SetConfigFile(path)
+
+	err := parser.ReadInConfig()
 	if err != nil {
 		return nil, fmt.Errorf("cannot read config file: %w", err)
 	}
 
+	for _, key := range parser.AllKeys() {
+		value := parser.GetString(key)
+		parser.Set(key, os.ExpandEnv(value))
+	}
+
 	var config Config
-	err = yaml.Unmarshal(data, &config)
+	err = parser.Unmarshal(&config)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config file: %w", err)
 	}

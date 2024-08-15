@@ -1,12 +1,11 @@
-version: "3"
 services:
 
   db:
     image: postgres:16.2-alpine3.19
     environment:
-      - POSTGRES_USER=otus
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=calendar
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
       - PGDATA=/var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
@@ -28,15 +27,91 @@ services:
   rabbitmq:
     image: rabbitmq:3.13.6-management-alpine
     environment:
-      - RABBITMQ_DEFAULT_USER=rmuser
-      - RABBITMQ_DEFAULT_PASS=rmpassword
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 2147483648
     ports:
       - "5672:5672"
       - "15672:15672" # админка
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmqctl ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
+
+  calendar_migrator:
+    image: calendar_migrator:develop
+    build:
+      context: ..
+      dockerfile: ./build/migrator/Dockerfile
+    environment:
+      - DB_URI=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - DB_TYPE=postgres
+    volumes:
+      - "../migrations:/app/migrations"
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+
+  calendar:
+    image: calendar:develop
+    build:
+      context: ..
+      dockerfile: ./build/calendar/Dockerfile
+    environment:
+      - DB_URI=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - GRPC_SERVER_PORT=${GRPC_SERVER_PORT}
+      - HTTP_SERVER_HOST=${HTTP_SERVER_HOST}
+      - HTTP_SERVER_PORT=${HTTP_SERVER_PORT}
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - "../configs/calendar_config.yaml:/etc/calendar/config.yaml"
+    restart: always
+    depends_on:
+      calendar_migrator:
+          condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+
+  calendar_scheduler:
+    image: calendar_scheduler:develop
+    build:
+      context: ..
+      dockerfile: ./build/scheduler/Dockerfile
+    environment:
+      - DB_URI=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - QUEUE_URI=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@${RABBITMQ_HOST}:${RABBITMQ_PORT}/
+    volumes:
+      - "../configs/scheduler_config.yaml:/etc/scheduler/config.yaml"
+    restart: always
+    depends_on:
+      calendar_migrator:
+          condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+
+  calendar_sender:
+    image: calendar_sender:develop
+    build:
+      context: ..
+      dockerfile: ./build/sender/Dockerfile
+    environment:
+      - DB_URI=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - QUEUE_URI=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@${RABBITMQ_HOST}:${RABBITMQ_PORT}/
+    volumes:
+      - "../configs/sender_config.yaml:/etc/sender/config.yaml"
+    restart: always
+    depends_on:
+      calendar_migrator:
+          condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   calendar-data:

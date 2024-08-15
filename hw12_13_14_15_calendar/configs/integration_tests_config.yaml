@@ -1,0 +1,18 @@
+# Logger config
+logger:
+  level: "DEBUG"
+# Database config
+database:
+  driver: "pgx"
+  uri: ${DB_URI}
+# Calendar service config
+calendar:
+  grpc_url: ${CALENDAR_GRPC_URL}
+  http_url: ${CALENDAR_HTTP_URL}
+  notifyPeriod: "1m" # период для уведомления в будущем
+  notifyScanPeriod: "1h" # период для проверки событий без уведомлений в прошлом
+  clearPeriod: "8760h" # период очистки старых событий
+  notifyCronPeriod: "5s" # периодичность запуска крона уведомлений
+  clearCronPeriod: "10s" # периодичность запуска крона очистки
+# Timezone
+timezone: "Europe/Moscow"

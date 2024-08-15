@@ -34,7 +34,8 @@ func (s *Storage) Close(_ context.Context) error {
 }
 
 const eventFields = `
-event_id, title, start_date, end_date, description, user_id, CAST(EXTRACT(EPOCH FROM notify_before) * 1000000000 as BIGINT) AS notify_before
+event_id, title, start_date, end_date, description, user_id, 
+CAST(EXTRACT(EPOCH FROM notify_before) * 1000000000 as BIGINT) AS notify_before, notify_status
 `
 
 const checkExistingEventsSQL = `
@@ -232,7 +233,7 @@ func (s *Storage) ListForPeriod(
 const selectEventsForNotifySQL = `
 SELECT ` + eventFields + `
 FROM events
-WHERE start_date - notify_before BETWEEN :start_notify_date AND :end_notify_date AND NOT notified
+WHERE start_date - notify_before BETWEEN :start_notify_date AND :end_notify_date AND notify_status = :notify_status
 ORDER BY start_date - notify_before, start_date, end_date
 `
 
@@ -243,6 +244,7 @@ func (s *Storage) ListForNotify(ctx context.Context, startNotifyDate time.Time, 
 	}
 
 	rows, err := stmt.QueryxContext(ctx, map[string]interface{}{
+		"notify_status":     storage.NotNotified,
 		"start_notify_date": startNotifyDate,
 		"end_notify_date":   endNotifyDate,
 	})
@@ -262,20 +264,21 @@ func (s *Storage) ListForNotify(ctx context.Context, startNotifyDate time.Time, 
 	return events, nil
 }
 
-const markAsNotifiedSQL = `
+const setNotifyStatusSQL = `
 UPDATE events
-SET notified = true
+SET notify_status = :notify_status
 WHERE event_id = ANY(:event_ids)
 `
 
-func (s *Storage) MarkAsNotified(ctx context.Context, eventIDs []uint64) error {
-	stmt, err := s.db.PrepareNamedContext(ctx, markAsNotifiedSQL)
+func (s *Storage) SetNotifyStatus(ctx context.Context, eventIDs []uint64, notifyStatus storage.NotifyStatus) error {
+	stmt, err := s.db.PrepareNamedContext(ctx, setNotifyStatusSQL)
 	if err != nil {
-		return fmt.Errorf("cannot prepare context for marking events as notified: %w", err)
+		return fmt.Errorf("cannot prepare context for setting notify status of events: %w", err)
 	}
 
 	_, err = stmt.ExecContext(ctx, map[string]interface{}{
-		"event_ids": eventIDs,
+		"notify_status": notifyStatus,
+		"event_ids":     eventIDs,
 	})
 	return err
 }

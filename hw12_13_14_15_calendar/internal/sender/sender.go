@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/model"
+	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Sender struct {
-	logger Logger
-	queue  Queue
-	done   chan struct{}
-	ctx    context.Context
+	logger  Logger
+	storage Storage
+	queue   Queue
+	done    chan struct{}
+	ctx     context.Context
 }
 
 type Logger interface {
@@ -21,6 +23,10 @@ type Logger interface {
 	Error(ctx context.Context, err error, msg string, args ...any)
 }
 
+type Storage interface {
+	SetNotifyStatus(ctx context.Context, eventIDs []uint64, notifyStatus storage.NotifyStatus) error
+}
+
 type Queue interface {
 	ReceiveData(ctx context.Context) (<-chan []byte, error)
 }
@@ -28,13 +34,15 @@ type Queue interface {
 func NewSender(
 	ctx context.Context,
 	logger Logger,
+	storage Storage,
 	queue Queue,
 ) *Sender {
 	return &Sender{
-		logger: logger,
-		queue:  queue,
-		done:   make(chan struct{}),
-		ctx:    ctx,
+		logger:  logger,
+		storage: storage,
+		queue:   queue,
+		done:    make(chan struct{}),
+		ctx:     ctx,
 	}
 }
 
@@ -81,6 +89,11 @@ func (s *Sender) processEvents(ctx context.Context) error {
 				s.logger.Error(ctx, err, "failed to read notification")
 			} else {
 				s.logger.Info(ctx, "received notification", "notification", notification)
+
+				err = s.storage.SetNotifyStatus(s.ctx, []uint64{notification.EventID}, storage.Notified)
+				if err != nil {
+					s.logger.Error(s.ctx, err, "failed setting notify status", "eventID", notification.EventID)
+				}
 			}
 		}
 	}()

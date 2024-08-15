@@ -6,10 +6,12 @@ import (
 	"log"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/logger"
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/queue/rabbit"
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/sender"
+	sqlstorage "github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
@@ -27,6 +29,13 @@ func main() {
 		return
 	}
 
+	location, err := time.LoadLocation(config.Timezone)
+	if err != nil {
+		log.Fatalf("failed loading location %v", err)
+		return
+	}
+	time.Local = location
+
 	logg, err := logger.New(config.Logger.Level)
 	if err != nil {
 		log.Fatalf("failed building logger %v", err)
@@ -36,6 +45,18 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
+
+	// storage
+	sqlStorage := sqlstorage.New(config.Database.Driver, config.Database.URI)
+	if err := sqlStorage.Connect(ctx); err != nil {
+		logg.Error(ctx, err, "failed to connect to db")
+		return
+	}
+	defer func() {
+		if err := sqlStorage.Close(ctx); err != nil {
+			logg.Error(ctx, err, "failed to close sql storage")
+		}
+	}()
 
 	// queue
 	queue := rabbit.NewQueue(
@@ -49,17 +70,20 @@ func main() {
 	consumer := queue.NewConsumer(config.Queue.ConsumerTag)
 	if err := queue.Start(ctx); err != nil {
 		logg.Error(ctx, err, "queue failed to start")
+		return
 	}
 
 	// sender
 	sender := sender.NewSender(
 		ctx,
 		logg,
+		sqlStorage,
 		consumer,
 	)
 
 	if err := sender.Start(ctx); err != nil {
 		logg.Error(ctx, err, "sender failed to start")
+		return
 	}
 
 	logg.Info(ctx, "sender is running...")

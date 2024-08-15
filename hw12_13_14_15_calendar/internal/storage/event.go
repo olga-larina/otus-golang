@@ -10,5 +10,13 @@ type Event struct {
 	Description  string        `db:"description"`
 	UserID       uint64        `db:"user_id"`
 	NotifyBefore time.Duration `db:"notify_before"`
-	Notified     bool          `db:"notified"`
+	NotifyStatus NotifyStatus  `db:"notify_status"`
 }
+
+type NotifyStatus int
+
+const (
+	NotNotified NotifyStatus = iota
+	NotifyInProgress
+	Notified
+)

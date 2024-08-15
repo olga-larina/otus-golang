@@ -1,0 +1,19 @@
+services:
+
+  calendar_integration_tests:
+    container_name: calendar_integration_tests
+    image: calendar_integration_tests:develop
+    build:
+      context: ..
+      dockerfile: ./build/integration_tests/Dockerfile
+    environment: 
+      - DB_URI=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - CALENDAR_GRPC_URL=${CALENDAR_HOST}:${GRPC_SERVER_PORT}
+      - CALENDAR_HTTP_URL=http://${CALENDAR_HOST}:${HTTP_SERVER_PORT}
+    volumes:
+      - "../configs/integration_tests_config.yaml:/etc/integration_tests/config.yaml"
+    restart: "no"
+    depends_on:
+      - calendar
+      - calendar_scheduler
+      - calendar_sender

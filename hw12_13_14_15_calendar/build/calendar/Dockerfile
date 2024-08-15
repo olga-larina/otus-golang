@@ -27,10 +27,12 @@ LABEL ORGANIZATION="OTUS Online Education"
 LABEL SERVICE="calendar"
 LABEL MAINTAINERS="student@otus.ru"
 
+# Для использования временных зон
+RUN apk add --no-cache tzdata
+
 ENV BIN_FILE "/opt/calendar/calendar"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
 
 ENV CONFIG_FILE /etc/calendar/config.yaml
-COPY ./configs/calendar_config.yaml ${CONFIG_FILE}
 
 CMD ${BIN_FILE} -config ${CONFIG_FILE}

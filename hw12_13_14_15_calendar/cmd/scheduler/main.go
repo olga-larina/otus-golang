@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/logger"
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/queue/rabbit"
@@ -29,6 +29,13 @@ func main() {
 		return
 	}
 
+	location, err := time.LoadLocation(config.Timezone)
+	if err != nil {
+		log.Fatalf("failed loading location %v", err)
+		return
+	}
+	time.Local = location
+
 	logg, err := logger.New(config.Logger.Level)
 	if err != nil {
 		log.Fatalf("failed building logger %v", err)
@@ -40,21 +47,16 @@ func main() {
 	defer cancel()
 
 	// storage
-	dbDsn := fmt.Sprintf(
-		"%s://%s:%s@%s:%s/%s",
-		config.Database.DsnPrefix,
-		config.Database.Username,
-		config.Database.Password,
-		config.Database.Host,
-		config.Database.Port,
-		config.Database.DBName,
-	)
-	sqlStorage := sqlstorage.New(config.Database.Driver, dbDsn)
+	sqlStorage := sqlstorage.New(config.Database.Driver, config.Database.URI)
 	if err := sqlStorage.Connect(ctx); err != nil {
 		logg.Error(ctx, err, "failed to connect to db")
 		return
 	}
-	defer sqlStorage.Close(ctx)
+	defer func() {
+		if err := sqlStorage.Close(ctx); err != nil {
+			logg.Error(ctx, err, "failed to close sql storage")
+		}
+	}()
 
 	// queue
 	queue := rabbit.NewQueue(
@@ -68,6 +70,7 @@ func main() {
 	publisher := queue.NewPublisher()
 	if err := queue.Start(ctx); err != nil {
 		logg.Error(ctx, err, "queue failed to start")
+		return
 	}
 
 	// scheduler
@@ -85,6 +88,7 @@ func main() {
 
 	if err := scheduler.Start(ctx); err != nil {
 		logg.Error(ctx, err, "scheduler failed to start")
+		return
 	}
 
 	logg.Info(ctx, "scheduler is running...")
