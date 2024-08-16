@@ -12,8 +12,7 @@ ENV CODE_DIR /go/src/
 WORKDIR ${CODE_DIR}
 
 COPY go.mod .
-COPY go.sum .
-RUN go mod download
+RUN go mod tidy
 
 COPY . ${CODE_DIR}
 
