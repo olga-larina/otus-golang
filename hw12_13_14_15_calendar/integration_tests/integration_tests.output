@@ -1,129 +1,163 @@
 bash integration_tests/integration_tests.sh; \
     e=$?; \
     exit $e
-[+] Building 25.5s (54/54) FINISHED                                                                                               docker:desktop-linux
+[+] Building 80.6s (59/59) FINISHED                                                                                               docker:desktop-linux
  => [calendar_migrator internal] load build definition from Dockerfile                                                                            0.0s
  => => transferring dockerfile: 802B                                                                                                              0.0s
- => [calendar_sender internal] load metadata for docker.io/library/alpine:3.9                                                                     1.4s
- => [calendar_integration_tests internal] load metadata for docker.io/library/golang:1.22-alpine                                                  1.8s
+ => [calendar internal] load metadata for docker.io/library/alpine:3.9                                                                            2.5s
+ => [calendar_integration_tests internal] load metadata for docker.io/library/golang:1.22-alpine                                                  2.5s
  => [calendar_migrator internal] load .dockerignore                                                                                               0.0s
  => => transferring context: 2B                                                                                                                   0.0s
  => CACHED [calendar_integration_tests 1/7] FROM docker.io/library/golang:1.22-alpine@sha256:1a478681b671001b7f029f94b5016aed984a23ad99c707f6a0a  0.0s
- => [calendar_scheduler stage-1 1/3] FROM docker.io/library/alpine:3.9@sha256:414e0518bb9228d35e4cd5165567fb91d26c6a214e9c95899e1e056fcd349011    0.0s
- => CACHED [calendar_migrator build 2/3] RUN apk add --no-cache git build-base                                                                    0.0s
- => CACHED [calendar_migrator build 3/3] RUN go install -ldflags '-extldflags "-static"' github.com/pressly/goose/v3/cmd/goose@v3.19.2            0.0s
- => CACHED [calendar_migrator stage-1 2/2] COPY --from=build /go/bin/goose /app/goose                                                             0.0s
- => [calendar_migrator] exporting to image                                                                                                        0.0s
- => => exporting layers                                                                                                                           0.0s
- => => writing image sha256:6690d44a1535652041c66262d8946dee4ef927cfe35edd2fec5a806e0239d35c                                                      0.0s
- => => naming to docker.io/library/calendar_migrator:develop                                                                                      0.0s
- => [calendar_sender internal] load build definition from Dockerfile                                                                              0.0s
- => => transferring dockerfile: 1.03kB                                                                                                            0.0s
+ => => resolve docker.io/library/golang:1.22-alpine@sha256:1a478681b671001b7f029f94b5016aed984a23ad99c707f6a0ab6563860ae2f3                       0.0s
+ => => sha256:1a478681b671001b7f029f94b5016aed984a23ad99c707f6a0ab6563860ae2f3 10.29kB / 10.29kB                                                  0.0s
+ => => sha256:bcaf0ce8579d67d827196006b378c4d13f056aa4f403c18b2ab52feb2fb8180d 1.92kB / 1.92kB                                                    0.0s
+ => => sha256:5aeac238cb9ce1e5aec57fd9a35e8cb26b56fcc2715e2ee0ff38627169decdf0 2.09kB / 2.09kB                                                    0.0s
+ => CACHED [calendar_sender stage-1 1/3] FROM docker.io/library/alpine:3.9@sha256:414e0518bb9228d35e4cd5165567fb91d26c6a214e9c95899e1e056fcd3490  0.6s
+ => => resolve docker.io/library/alpine:3.9@sha256:414e0518bb9228d35e4cd5165567fb91d26c6a214e9c95899e1e056fcd349011                               0.0s
+ => => sha256:414e0518bb9228d35e4cd5165567fb91d26c6a214e9c95899e1e056fcd349011 1.64kB / 1.64kB                                                    0.0s
+ => => sha256:f920ccc826134587fffcf1ddc6b2a554947e0f1a5ae5264bbf3435da5b2e8e61 528B / 528B                                                        0.0s
+ => => sha256:9afdd4a290bf60cc642c5c85a91da9e08d3908d16b8fc96b8efd65716c02f0bb 1.51kB / 1.51kB                                                    0.0s
+ => => sha256:941f399634ec37b35e6764d0e6cf350593652f06f76586d45ddfc0d77de7a701 2.69MB / 2.69MB                                                    0.3s
+ => => extracting sha256:941f399634ec37b35e6764d0e6cf350593652f06f76586d45ddfc0d77de7a701                                                         0.1s
+ => [calendar_migrator build 2/3] RUN apk add --no-cache git build-base                                                                           4.4s
+ => [calendar_migrator build 3/3] RUN go install -ldflags '-extldflags "-static"' github.com/pressly/goose/v3/cmd/goose@v3.19.2                  29.4s 
+ => [calendar_migrator stage-1 2/2] COPY --from=build /go/bin/goose /app/goose                                                                    0.1s 
+ => [calendar_migrator] exporting to image                                                                                                        0.1s 
+ => => exporting layers                                                                                                                           0.1s 
+ => => writing image sha256:a9ffeb609dc0baab196784ab3187c72b07eb26352eb5577ea932d080a0bff293                                                      0.0s 
+ => => naming to docker.io/library/calendar_migrator:develop                                                                                      0.0s 
+ => [calendar_migrator] resolving provenance for metadata file                                                                                    0.0s 
  => [calendar internal] load build definition from Dockerfile                                                                                     0.0s
  => => transferring dockerfile: 1.01kB                                                                                                            0.0s
- => [calendar_scheduler internal] load metadata for docker.io/library/golang:1.22                                                                 0.2s
  => [calendar_scheduler internal] load build definition from Dockerfile                                                                           0.0s
  => => transferring dockerfile: 1.05kB                                                                                                            0.0s
+ => [calendar_sender internal] load build definition from Dockerfile                                                                              0.0s
+ => => transferring dockerfile: 1.03kB                                                                                                            0.0s
+ => [calendar_scheduler internal] load metadata for docker.io/library/golang:1.22                                                                 1.1s
  => [calendar_scheduler internal] load .dockerignore                                                                                              0.0s
  => => transferring context: 2B                                                                                                                   0.0s
  => [calendar internal] load .dockerignore                                                                                                        0.0s
  => => transferring context: 2B                                                                                                                   0.0s
  => [calendar_sender internal] load .dockerignore                                                                                                 0.0s
  => => transferring context: 2B                                                                                                                   0.0s
- => [calendar_scheduler build 1/7] FROM docker.io/library/golang:1.22@sha256:367bb5295d3103981a86a572651d8297d6973f2ec8b62f716b007860e22cbc25     0.0s
+ => [calendar_scheduler build 1/7] FROM docker.io/library/golang:1.22@sha256:367bb5295d3103981a86a572651d8297d6973f2ec8b62f716b007860e22cbc25    10.6s
  => => resolve docker.io/library/golang:1.22@sha256:367bb5295d3103981a86a572651d8297d6973f2ec8b62f716b007860e22cbc25                              0.0s
- => [calendar internal] load build context                                                                                                        0.0s
- => => transferring context: 35.15kB                                                                                                              0.0s
- => [calendar_sender internal] load build context                                                                                                 0.0s
- => => transferring context: 35.15kB                                                                                                              0.0s
- => [calendar_scheduler internal] load build context                                                                                              0.0s
- => => transferring context: 35.15kB                                                                                                              0.0s
- => CACHED [calendar build 2/7] WORKDIR /go/src/                                                                                                  0.0s
+ => => sha256:7b24851aa36de07cd94173b8e2052846573dacc3b241620d713254e647352394 49.59MB / 49.59MB                                                  2.9s
+ => => sha256:275677961327bd0cf394699228e29d7caf27f171c627899a20ebc9eeb550e209 63.99MB / 63.99MB                                                  4.7s
+ => => sha256:367bb5295d3103981a86a572651d8297d6973f2ec8b62f716b007860e22cbc25 9.74kB / 9.74kB                                                    0.0s
+ => => sha256:bdd4ea901fda6637a0d791978310e87631f923c4c9581adbfb3719bc5ec491db 2.32kB / 2.32kB                                                    0.0s
+ => => sha256:c7220e195e6ea64f427b2d8a3cccd04e90d84644e3389f1ed67ce834b4bdf475 2.82kB / 2.82kB                                                    0.0s
+ => => sha256:1593650c75729f64218ae272e8ffff9da7bbba9599bd1815877da99a2651fd9b 23.59MB / 23.59MB                                                  1.9s
+ => => sha256:22ed394a57fdf7a8b1057c80df7e753ad2e1f2dbce3af0d967d2a04f584591e6 86.28MB / 86.28MB                                                  5.9s
+ => => extracting sha256:7b24851aa36de07cd94173b8e2052846573dacc3b241620d713254e647352394                                                         1.5s
+ => => sha256:6edaf09ec107de8a2f93a55fc7fad71182aeefb0572c5f2e2f498d1ab1fd3b77 66.28MB / 66.28MB                                                  6.5s
+ => => extracting sha256:1593650c75729f64218ae272e8ffff9da7bbba9599bd1815877da99a2651fd9b                                                         0.3s
+ => => sha256:f4f6a6d8da17ef2ade29cbaedba7629db289f1cfd053fe8fb47b5f6290dcc185 126B / 126B                                                        4.9s
+ => => extracting sha256:275677961327bd0cf394699228e29d7caf27f171c627899a20ebc9eeb550e209                                                         1.6s
+ => => sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 32B / 32B                                                          5.1s
+ => => extracting sha256:22ed394a57fdf7a8b1057c80df7e753ad2e1f2dbce3af0d967d2a04f584591e6                                                         1.3s
+ => => extracting sha256:6edaf09ec107de8a2f93a55fc7fad71182aeefb0572c5f2e2f498d1ab1fd3b77                                                         2.6s
+ => => extracting sha256:f4f6a6d8da17ef2ade29cbaedba7629db289f1cfd053fe8fb47b5f6290dcc185                                                         0.0s
+ => => extracting sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1                                                         0.0s
+ => [calendar_scheduler internal] load build context                                                                                              0.5s
+ => => transferring context: 41.49MB                                                                                                              0.5s
+ => [calendar_sender stage-1 2/3] RUN apk add --no-cache tzdata                                                                                   0.8s
+ => [calendar internal] load build context                                                                                                        0.5s
+ => => transferring context: 41.49MB                                                                                                              0.5s
+ => [calendar_sender internal] load build context                                                                                                 0.5s
+ => => transferring context: 41.49MB                                                                                                              0.5s
+ => [calendar build 2/7] WORKDIR /go/src/                                                                                                         0.4s
+ => [calendar_scheduler build 3/7] COPY go.mod .                                                                                                  0.0s
+ => [calendar_sender build 4/7] COPY go.sum .                                                                                                     0.0s
+ => [calendar_scheduler build 5/7] RUN go mod download                                                                                            6.6s
  => CACHED [calendar_sender build 3/7] COPY go.mod .                                                                                              0.0s
  => CACHED [calendar_sender build 4/7] COPY go.sum .                                                                                              0.0s
- => CACHED [calendar_sender build 5/7] RUN go mod download                                                                                        0.0s
- => [calendar_sender build 6/7] COPY . /go/src/                                                                                                   0.3s
- => CACHED [calendar_scheduler build 3/7] COPY go.mod .                                                                                           0.0s
- => CACHED [calendar_scheduler build 4/7] COPY go.sum .                                                                                           0.0s
- => CACHED [calendar_scheduler build 5/7] RUN go mod download                                                                                     0.0s
- => [calendar_scheduler build 6/7] COPY . /go/src/                                                                                                0.3s
+ => [calendar_sender build 5/7] RUN go mod download                                                                                               6.6s
  => CACHED [calendar build 3/7] COPY go.mod .                                                                                                     0.0s
  => CACHED [calendar build 4/7] COPY go.sum .                                                                                                     0.0s
- => CACHED [calendar build 5/7] RUN go mod download                                                                                               0.0s
- => [calendar build 6/7] COPY . /go/src/                                                                                                          0.2s
- => [calendar build 7/7] RUN CGO_ENABLED=0 go build         -ldflags "$LDFLAGS"         -o /opt/calendar/calendar cmd/calendar/*                 16.5s
- => [calendar_scheduler build 7/7] RUN CGO_ENABLED=0 go build         -ldflags "$LDFLAGS"         -o /opt/scheduler/calendar_scheduler cmd/sche  15.6s
- => [calendar_sender build 7/7] RUN CGO_ENABLED=0 go build         -ldflags "$LDFLAGS"         -o /opt/sender/calendar_sender cmd/sender/*       15.6s
- => CACHED [calendar stage-1 2/3] RUN apk add --no-cache tzdata                                                                                   0.0s
- => CACHED [calendar_sender stage-1 3/3] COPY --from=build /opt/sender/calendar_sender /opt/sender/calendar_sender                                0.0s
+ => [calendar build 5/7] RUN go mod download                                                                                                      6.7s
+ => [calendar_scheduler build 6/7] COPY . /go/src/                                                                                                0.2s
+ => [calendar_sender build 6/7] COPY . /go/src/                                                                                                   0.1s
+ => [calendar build 6/7] COPY . /go/src/                                                                                                          0.1s
+ => [calendar build 7/7] RUN CGO_ENABLED=0 go build         -ldflags "$LDFLAGS"         -o /opt/calendar/calendar cmd/calendar/*                 18.7s
+ => [calendar_sender build 7/7] RUN CGO_ENABLED=0 go build         -ldflags "$LDFLAGS"         -o /opt/sender/calendar_sender cmd/sender/*       17.6s
+ => [calendar_scheduler build 7/7] RUN CGO_ENABLED=0 go build         -ldflags "$LDFLAGS"         -o /opt/scheduler/calendar_scheduler cmd/sche  17.1s
+ => [calendar_scheduler stage-1 3/3] COPY --from=build /opt/scheduler/calendar_scheduler /opt/scheduler/calendar_scheduler                        0.1s
+ => [calendar_scheduler] exporting to image                                                                                                       0.1s
+ => => exporting layers                                                                                                                           0.1s
+ => => writing image sha256:0cbf065a917462544bc33611c44e0381d2c9912da6e2aac9d3da84058dabd07d                                                      0.0s
+ => => naming to docker.io/library/calendar_scheduler:develop                                                                                     0.0s
+ => [calendar_scheduler] resolving provenance for metadata file                                                                                   0.0s
+ => [calendar_sender stage-1 3/3] COPY --from=build /opt/sender/calendar_sender /opt/sender/calendar_sender                                       0.0s
  => [calendar_sender] exporting to image                                                                                                          0.0s
  => => exporting layers                                                                                                                           0.0s
- => => writing image sha256:ef710797a074bf3a9b30bca434d431335c142c6853d36797aa67e9a6327f8f61                                                      0.0s
+ => => writing image sha256:57adc89d618284122c9f02d3f80aaf2fc2b4f188ae88de78b4d36995d4b6090a                                                      0.0s
  => => naming to docker.io/library/calendar_sender:develop                                                                                        0.0s
- => CACHED [calendar_scheduler stage-1 3/3] COPY --from=build /opt/scheduler/calendar_scheduler /opt/scheduler/calendar_scheduler                 0.0s
- => [calendar_scheduler] exporting to image                                                                                                       0.0s
- => => exporting layers                                                                                                                           0.0s
- => => writing image sha256:3ff761756fd3ddd7f5c3f573c7de25adc466462ae24e3ebbafb6d42ba7213481                                                      0.0s
- => => naming to docker.io/library/calendar_scheduler:develop                                                                                     0.0s
- => CACHED [calendar stage-1 3/3] COPY --from=build /opt/calendar/calendar /opt/calendar/calendar                                                 0.0s
+ => [calendar_sender] resolving provenance for metadata file                                                                                      0.0s
+ => [calendar stage-1 3/3] COPY --from=build /opt/calendar/calendar /opt/calendar/calendar                                                        0.0s
  => [calendar] exporting to image                                                                                                                 0.0s
  => => exporting layers                                                                                                                           0.0s
- => => writing image sha256:4ac98ca141355f8e3202418e5aac227087461068af537d7295f10fae14bd1d06                                                      0.0s
+ => => writing image sha256:e69b3e00f5ca24fc28410e19a19acf6cbfcf1e807bb5a0f5c18809de4ca11ebe                                                      0.0s
  => => naming to docker.io/library/calendar:develop                                                                                               0.0s
+ => [calendar] resolving provenance for metadata file                                                                                             0.0s
  => [calendar_integration_tests internal] load build definition from Dockerfile                                                                   0.0s
  => => transferring dockerfile: 538B                                                                                                              0.0s
  => [calendar_integration_tests internal] load .dockerignore                                                                                      0.0s
  => => transferring context: 2B                                                                                                                   0.0s
  => [calendar_integration_tests internal] load build context                                                                                      0.0s
- => => transferring context: 4.86kB                                                                                                               0.0s
+ => => transferring context: 4.87kB                                                                                                               0.0s
  => [calendar_integration_tests 2/7] RUN apk add --no-cache tzdata                                                                                0.8s
  => [calendar_integration_tests 3/7] WORKDIR /go/src/                                                                                             0.0s
  => [calendar_integration_tests 4/7] COPY go.mod .                                                                                                0.0s
  => [calendar_integration_tests 5/7] COPY go.sum .                                                                                                0.0s
- => [calendar_integration_tests 6/7] RUN go mod download                                                                                          5.0s
+ => [calendar_integration_tests 6/7] RUN go mod download                                                                                          4.6s
  => [calendar_integration_tests 7/7] COPY . /go/src/                                                                                              0.1s
  => [calendar_integration_tests] exporting to image                                                                                               0.4s
- => => exporting layers                                                                                                                           0.3s
- => => writing image sha256:93e34b9a5253f99f115d6d94566b5e82154630ea2e2b70de26a30a2e18572c6c                                                      0.0s
+ => => exporting layers                                                                                                                           0.4s
+ => => writing image sha256:e1e12743b8d306a1002a53f735c17a2f41287efdfc17c1b0cd18fa7f0aaca472                                                      0.0s
  => => naming to docker.io/library/calendar_integration_tests:develop                                                                             0.0s
-[+] Running 8/8
+ => [calendar_integration_tests] resolving provenance for metadata file                                                                           0.0s
+[+] Running 10/10
  ✔ Network deployments_default                 Created                                                                                            0.0s 
- ✔ Container deployments-db-1                  Healthy                                                                                           10.9s 
- ✔ Container deployments-rabbitmq-1            Healthy                                                                                           11.6s 
- ✔ Container deployments-calendar_migrator-1   Exited                                                                                            11.5s 
- ✔ Container deployments-calendar-1            Started                                                                                           11.6s 
- ✔ Container deployments-calendar_sender-1     Started                                                                                           11.6s 
- ✔ Container deployments-calendar_scheduler-1  Started                                                                                           11.6s 
- ✔ Container calendar_integration_tests        Started                                                                                           11.7s 
+ ✔ Volume "deployments_rabbitmq-data"          Created                                                                                            0.0s 
+ ✔ Volume "deployments_calendar-data"          Created                                                                                            0.0s 
+ ✔ Container deployments-rabbitmq-1            Healthy                                                                                           11.5s 
+ ✔ Container deployments-db-1                  Healthy                                                                                            5.9s 
+ ✔ Container deployments-calendar_migrator-1   Exited                                                                                             6.5s 
+ ✔ Container deployments-calendar_sender-1     Started                                                                                           11.7s 
+ ✔ Container deployments-calendar_scheduler-1  Started                                                                                           11.7s 
+ ✔ Container deployments-calendar-1            Started                                                                                           11.7s 
+ ✔ Container calendar_integration_tests        Started                                                                                           11.8s 
 === RUN   TestIntegrationTestSuite
 === PAUSE TestIntegrationTestSuite
 === CONT  TestIntegrationTestSuite
-{"time":"2024-08-15T16:53:30.33337797+03:00","level":"INFO","msg":"suite started"}
+{"time":"2024-08-16T08:30:27.703967384+03:00","level":"INFO","msg":"suite started"}
 === RUN   TestIntegrationTestSuite/TestEventClear
 === RUN   TestIntegrationTestSuite/TestEventNotification
 === RUN   TestIntegrationTestSuite/TestGrpcListEvents
 === RUN   TestIntegrationTestSuite/TestGrpcProcessEvent
 === RUN   TestIntegrationTestSuite/TestHttpListEvents
 === RUN   TestIntegrationTestSuite/TestHttpProcessEvent
-{"time":"2024-08-15T16:53:45.480443213+03:00","level":"INFO","msg":"suite finished"}
---- PASS: TestIntegrationTestSuite (15.15s)
-    --- PASS: TestIntegrationTestSuite/TestEventClear (10.10s)
+{"time":"2024-08-16T08:30:35.771085805+03:00","level":"INFO","msg":"suite finished"}
+--- PASS: TestIntegrationTestSuite (8.07s)
+    --- PASS: TestIntegrationTestSuite/TestEventClear (3.03s)
     --- PASS: TestIntegrationTestSuite/TestEventNotification (5.02s)
     --- PASS: TestIntegrationTestSuite/TestGrpcListEvents (0.01s)
     --- PASS: TestIntegrationTestSuite/TestGrpcProcessEvent (0.00s)
     --- PASS: TestIntegrationTestSuite/TestHttpListEvents (0.01s)
     --- PASS: TestIntegrationTestSuite/TestHttpProcessEvent (0.00s)
 PASS
-ok      github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/integration_tests     15.157s
-[+] Running 10/10
+ok      github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/integration_tests     8.079s
+[+] Running 10/7
  ✔ Container calendar_integration_tests        Removed                                                                                            0.0s 
- ✔ Container deployments-calendar_sender-1     Removed                                                                                            0.2s 
+ ✔ Container deployments-calendar_sender-1     Removed                                                                                            0.1s 
  ✔ Container deployments-calendar-1            Removed                                                                                            0.2s 
  ✔ Container deployments-calendar_scheduler-1  Removed                                                                                            0.2s 
  ✔ Container deployments-calendar_migrator-1   Removed                                                                                            0.0s 
- ✔ Container deployments-rabbitmq-1            Removed                                                                                            1.2s 
+ ✔ Container deployments-rabbitmq-1            Removed                                                                                            1.3s 
  ✔ Container deployments-db-1                  Removed                                                                                            0.1s 
- ✔ Volume deployments_calendar-data            Removed                                                                                            0.1s 
- ✔ Volume deployments_rabbitmq-data            Removed                                                                                            0.1s 
+ ✔ Volume deployments_rabbitmq-data            Removed                                                                                            0.0s 
+ ✔ Volume deployments_calendar-data            Removed                                                                                            0.0s 
  ✔ Network deployments_default                 Removed                                                                                            0.1s 
 Exit code: 0

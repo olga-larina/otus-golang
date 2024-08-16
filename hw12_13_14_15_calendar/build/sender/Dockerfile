@@ -1,5 +1,5 @@
 # Собираем в гошке
-FROM golang:1.22 as build
+FROM golang:1.22 AS build
 
 ENV BIN_FILE /opt/sender/calendar_sender
 ENV CODE_DIR /go/src/

@@ -103,12 +103,12 @@ generate:
 # поднять сервисы и окружение
 .PHONY: up
 up:
-	docker-compose --env-file deployments/.env -f deployments/docker-compose.yaml up -d --build
+	docker compose --env-file deployments/.env -f deployments/docker-compose.yaml up -d --build
 
 # потушить сервисы и окружение
 .PHONY: down
 down:
-	docker-compose --env-file deployments/.env -f deployments/docker-compose.yaml down
+	docker compose --env-file deployments/.env -f deployments/docker-compose.yaml down
 
 # запустить интеграционные тесты
 .PHONY: integration-tests

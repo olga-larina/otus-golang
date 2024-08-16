@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine as build
+FROM golang:1.22-alpine AS build
 
 LABEL ORGANIZATION="OTUS Online Education"
 LABEL SERVICE="calendar_integration_tests"

@@ -1,5 +1,5 @@
 # Собираем в гошке
-FROM golang:1.22-alpine as build
+FROM golang:1.22-alpine AS build
 
 # Устанавливаем нужные зависимости для статической компиляции
 RUN apk add --no-cache git build-base
