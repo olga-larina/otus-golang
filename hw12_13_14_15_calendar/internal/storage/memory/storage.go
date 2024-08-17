@@ -154,13 +154,13 @@ func (s *Storage) ListForNotify(_ context.Context, startNotifyDate time.Time, en
 	return events, nil
 }
 
-func (s *Storage) MarkAsNotified(_ context.Context, eventIDs []uint64) error {
+func (s *Storage) SetNotifyStatus(_ context.Context, eventIDs []uint64, notifyStatus storage.NotifyStatus) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	for _, eventID := range eventIDs {
 		if event := s.events[eventID]; event != nil {
-			event.Notified = true
+			event.NotifyStatus = notifyStatus
 		}
 	}
 	return nil

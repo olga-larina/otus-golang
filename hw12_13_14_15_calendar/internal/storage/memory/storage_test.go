@@ -355,11 +355,12 @@ func TestStorageScheduling(t *testing.T) {
 		require.EqualValues(t, expectedEvents, actualEvents)
 	})
 
-	t.Run("mark events as notified", func(t *testing.T) {
+	t.Run("set events notify status", func(t *testing.T) {
 		s := New()
 		event := event
 		event1 := event1
 		event2 := event2
+		eventOther := eventOther
 
 		event1ID, err := s.Create(ctx, &event1)
 		require.NoError(t, err)
@@ -370,20 +371,30 @@ func TestStorageScheduling(t *testing.T) {
 		eventID, err := s.Create(ctx, &event)
 		require.NoError(t, err)
 
-		err = s.MarkAsNotified(ctx, []uint64{event1ID, eventID})
+		eventOtherID, err := s.Create(ctx, &eventOther)
+		require.NoError(t, err)
+
+		err = s.SetNotifyStatus(ctx, []uint64{event1ID, eventID}, storage.NotifyInProgress)
+		require.NoError(t, err)
+
+		err = s.SetNotifyStatus(ctx, []uint64{eventOtherID}, storage.Notified)
 		require.NoError(t, err)
 
 		actualEvent1, err := s.GetByID(ctx, userID, event1ID)
 		require.NoError(t, err)
-		require.True(t, actualEvent1.Notified)
+		require.Equal(t, storage.NotifyInProgress, actualEvent1.NotifyStatus)
 
 		actualEvent2, err := s.GetByID(ctx, userID, event2ID)
 		require.NoError(t, err)
-		require.False(t, actualEvent2.Notified)
+		require.Equal(t, storage.NotNotified, actualEvent2.NotifyStatus)
 
 		actualEvent, err := s.GetByID(ctx, userID, eventID)
 		require.NoError(t, err)
-		require.True(t, actualEvent.Notified)
+		require.Equal(t, storage.NotifyInProgress, actualEvent.NotifyStatus)
+
+		actualEventOther, err := s.GetByID(ctx, eventOther.UserID, eventOtherID)
+		require.NoError(t, err)
+		require.Equal(t, storage.Notified, actualEventOther.NotifyStatus)
 	})
 
 	t.Run("delete old events", func(t *testing.T) {

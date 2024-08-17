@@ -1,5 +1,5 @@
 # Собираем в гошке
-FROM golang:1.22 as build
+FROM golang:1.22 AS build
 
 ENV BIN_FILE /opt/calendar/calendar
 ENV CODE_DIR /go/src/
@@ -8,8 +8,7 @@ WORKDIR ${CODE_DIR}
 
 # Кэшируем слои с модулями
 COPY go.mod .
-COPY go.sum .
-RUN go mod download
+RUN go mod tidy
 
 COPY . ${CODE_DIR}
 
@@ -27,10 +26,12 @@ LABEL ORGANIZATION="OTUS Online Education"
 LABEL SERVICE="calendar"
 LABEL MAINTAINERS="student@otus.ru"
 
+# Для использования временных зон
+RUN apk add --no-cache tzdata
+
 ENV BIN_FILE "/opt/calendar/calendar"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
 
 ENV CONFIG_FILE /etc/calendar/config.yaml
-COPY ./configs/calendar_config.yaml ${CONFIG_FILE}
 
 CMD ${BIN_FILE} -config ${CONFIG_FILE}

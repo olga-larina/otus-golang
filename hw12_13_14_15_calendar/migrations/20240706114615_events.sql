@@ -3,8 +3,8 @@
 create table if not exists events (
     event_id        bigserial,
     title           varchar(256) not null,
-    start_date      timestamp not null,
-    end_date        timestamp not null,
+    start_date      timestamptz not null,
+    end_date        timestamptz not null,
     description     text,
     user_id         bigint,
     notify_before   interval,

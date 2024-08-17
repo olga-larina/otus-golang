@@ -32,7 +32,7 @@ type Logger interface {
 
 type Storage interface {
 	ListForNotify(ctx context.Context, startNotifyDate time.Time, endNotifyDate time.Time) ([]*storage.Event, error)
-	MarkAsNotified(ctx context.Context, eventIDs []uint64) error
+	SetNotifyStatus(ctx context.Context, eventIDs []uint64, notifyStatus storage.NotifyStatus) error
 	DeleteByEndDate(ctx context.Context, maxEndDate time.Time) error
 }
 
@@ -141,7 +141,7 @@ func (s *Scheduler) notifyEvents() {
 		eventIDs = append(eventIDs, event.ID)
 	}
 
-	err = s.storage.MarkAsNotified(s.ctx, eventIDs)
+	err = s.storage.SetNotifyStatus(s.ctx, eventIDs, storage.NotifyInProgress)
 	if err != nil {
 		s.logger.Error(
 			s.ctx, err, "failed notifying events",

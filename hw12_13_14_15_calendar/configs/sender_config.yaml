@@ -1,11 +1,17 @@
 # Logger config
 logger:
   level: "INFO"
+# Database config
+database:
+  driver: "pgx"
+  uri: ${DB_URI}
 # Queue consumer config
 queue:
-  uri: "amqp://rmuser:rmpassword@127.0.0.1:5672/"
+  uri: ${QUEUE_URI}
   exchangeName: "calendar-events"
   exchangeType: "direct" # direct|fanout|topic|x-custom
   queueName: "notifications-queue"
   routingKey: "notifications"
   consumerTag: "sender-consumer"
+# Timezone
+timezone: "Europe/Moscow"
