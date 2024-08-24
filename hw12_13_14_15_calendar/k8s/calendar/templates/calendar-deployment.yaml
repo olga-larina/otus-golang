@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.calendar.nameOverride | default .Chart.Name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.calendar.appName }}
+spec:
+  replicas: {{ .Values.calendar.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.calendar.appName }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.calendar.appName }}
+    spec:
+      initContainers:
+      - name: calendar-clone-repo
+        image: {{ .Values.calendar.initContainers.cloneRepo.image }}
+        command: ["/bin/sh", "-c", "rm -rf /app/* && git clone https://github.com/olga-larina/otus-golang.git /app"]
+        volumeMounts:
+        - name: calendar-app-data
+          mountPath: /app
+      - name: calendar-migrator
+        image: {{ .Values.calendar.initContainers.migrator.image }} # образ загружен в миникуб через minikube image load {imageName}
+        env:
+        - name: DB_URI
+          value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@{{ .Values.db.host }}:$(POSTGRES_PORT)/$(POSTGRES_DB)"
+        envFrom:
+        - secretRef:
+            name: {{ .Values.secretName }}
+        - configMapRef:
+            name: {{ .Values.configMapName }}
+        volumeMounts:
+        - name: calendar-app-data
+          mountPath: /app/migrations
+          subPath: hw12_13_14_15_calendar/migrations
+      containers:
+        - name: calendar
+          image: {{ .Values.calendar.image }} # образ загружен в миникуб через minikube image load {imageName}
+          env:
+          - name: DB_URI
+            value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@{{ .Values.db.host }}:$(POSTGRES_PORT)/$(POSTGRES_DB)"
+          - name: SERVICE_NAME
+            value: "calendar-app"
+          envFrom:
+          - secretRef:
+              name: {{ .Values.secretName }}
+          - configMapRef:
+              name: {{ .Values.configMapName }}
+          ports:
+            - containerPort: {{ .Values.calendar.server.http.port }}
+              protocol: TCP
+            - containerPort: {{ .Values.calendar.server.grpc.port }}
+              protocol: TCP
+          volumeMounts:
+          - name: calendar-app-data
+            mountPath: /etc/calendar/config.yaml
+            subPath: hw12_13_14_15_calendar/configs/calendar_config.yaml
+          readinessProbe:
+            grpc:
+              port: {{ .Values.calendar.server.grpc.port }}
+              service: "calendar-app"
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            grpc:
+              port: {{ .Values.calendar.server.grpc.port }}
+              service: "calendar-app"
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            failureThreshold: 3
+      restartPolicy: Always
+      volumes:
+      - name: calendar-app-data
+        emptyDir: {}

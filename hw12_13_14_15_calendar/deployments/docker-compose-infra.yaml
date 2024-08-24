@@ -1,0 +1,47 @@
+services:
+
+  db:
+    image: postgres:16.2-alpine3.19
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - calendar-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U otus -d calendar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1G
+
+  rabbitmq:
+    image: rabbitmq:3.13.6-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 2147483648
+    ports:
+      - "5672:5672"
+      - "15672:15672" # админка
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmqctl ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  calendar-data:
+  rabbitmq-data:

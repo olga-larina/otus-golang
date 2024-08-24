@@ -1,0 +1,94 @@
+# Default values for calendar.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: "apps"
+
+calendar:
+  image: "calendar:develop"
+  replicaCount: 1
+  nameOverride: "calendar"
+  appName: "calendar"
+  initContainers:
+    cloneRepo:
+      image: "alpine/git:2.45.2"
+    migrator:
+      image: "calendar_migrator:develop"
+  server:
+    grpc:
+      port: "8081"
+    http:
+      port: "8080"
+      host: "0.0.0.0"
+
+scheduler:
+  image: "calendar_scheduler:develop"
+  replicaCount: 1
+  nameOverride: "calendar-scheduler"
+  appName: "calendar-scheduler"
+  initContainers:
+    cloneRepo:
+      image: "alpine/git:2.45.2"
+
+sender:
+  image: "calendar_sender:develop"
+  replicaCount: 1
+  nameOverride: "calendar-sender"
+  appName: "calendar-sender"
+  initContainers:
+    cloneRepo:
+      image: "alpine/git:2.45.2"
+
+db:
+  host: "host.minikube.internal"
+  port: 5432
+  dbName: "calendar"
+  type: "postgres"
+
+queue:
+  host: "host.minikube.internal"
+  port: "5672"
+
+service:
+  name: "calendar"
+  appName: "calendar"
+  type: "ClusterIP"
+  ports:
+    - name: "8080"
+      port: 8080
+      targetPort: 8080
+    - name: "8081"
+      port: 8081
+      targetPort: 8081
+
+ingress:
+  grpc:
+    name: "calendar-ingress-grpc"
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    rules:
+    - host: "calendar-grpc.127.0.0.1.nip.io"
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: "calendar"
+              port: 8081
+  http:
+    name: "calendar-ingress"
+    className: "nginx"
+    annotations: {}
+    rules:
+    - host: "calendar.127.0.0.1.nip.io"
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: "calendar"
+              port: 8080
+
+secretName: "calendar-secret"
+configMapName: "calendar-config"

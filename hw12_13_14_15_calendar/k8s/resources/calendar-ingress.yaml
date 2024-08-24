@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: calendar-ingress
+  namespace: apps
+spec:
+  ingressClassName: "nginx" # сначала - minikube addons enable ingress
+  rules:
+  # вызывать без указания портов после запуска туннеля minikube tunnel
+  - host: calendar.127.0.0.1.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: calendar
+            port:
+              number: 8080

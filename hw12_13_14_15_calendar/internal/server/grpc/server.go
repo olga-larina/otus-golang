@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
@@ -21,7 +24,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const userIDHeader = "X-USER-ID"
+const (
+	userIDHeader       = "X-USER-ID"
+	serviceNameDefault = "calendar-app"
+)
 
 var errNotValidUserID = errors.New("userID is not valid")
 
@@ -75,6 +81,14 @@ func (s *Server) Start(ctx context.Context) error {
 	)
 	reflection.Register(s.srv)
 	pb.RegisterEventServiceServer(s.srv, s)
+
+	serviceName, found := os.LookupEnv("SERVICE_NAME")
+	if !found {
+		serviceName = serviceNameDefault
+	}
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(s.srv, healthServer)
+	healthServer.SetServingStatus(serviceName, grpc_health_v1.HealthCheckResponse_SERVING)
 
 	return s.srv.Serve(lsn)
 }

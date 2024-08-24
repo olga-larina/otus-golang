@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMapName }}
+  namespace: {{ .Values.namespace }}
+data:
+  GRPC_SERVER_PORT: "{{ .Values.calendar.server.grpc.port }}"
+  HTTP_SERVER_HOST: "{{ .Values.calendar.server.http.host }}"
+  HTTP_SERVER_PORT: "{{ .Values.calendar.server.http.port }}"
+  POSTGRES_PORT: "{{ .Values.db.port }}"
+  POSTGRES_DB: "{{ .Values.db.dbName }}"
+  RABBITMQ_PORT: "{{ .Values.queue.port }}"
+  DB_TYPE: "{{ .Values.db.type }}"

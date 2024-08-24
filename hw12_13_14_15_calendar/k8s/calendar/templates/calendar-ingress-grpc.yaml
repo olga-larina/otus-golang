@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.grpc.name }}
+  namespace: {{ .Values.namespace }}
+  annotations:
+{{- with .Values.ingress.grpc.annotations }}
+  {{- toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.grpc.className }} # сначала - minikube addons enable ingress
+  rules:
+  # вызывать с указанием порта 80 после запуска туннеля minikube tunnel
+{{- range .Values.ingress.grpc.rules }}
+  - host: {{ .host }}
+    http:
+      paths:
+      {{- range .paths }}
+      - path: {{ .path }}
+        pathType: {{ .pathType | default "Prefix" }}
+        backend:
+          service:
+            name: {{ .backend.service.name }}
+            port:
+              number: {{ .backend.service.port }}
+      {{- end }}
+{{- end }}
