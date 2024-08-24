@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar-sender
+  namespace: apps
+  labels:
+    app: calendar-sender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calendar-sender
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: calendar-sender
+    spec:
+      initContainers:
+      - name: calendar-clone-repo
+        image: alpine/git:2.45.2
+        command: ["/bin/sh", "-c", "rm -rf /app-sender/* && git clone https://github.com/olga-larina/otus-golang.git /app-sender"]
+        volumeMounts:
+        - name: calendar-app-data
+          mountPath: /app-sender
+      containers:
+        - name: calendar-sender
+          image: calendar_sender:develop # образ загружен в миникуб через minikube image load {imageName}
+          env:
+          - name: DB_URI
+            value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@host.minikube.internal:$(POSTGRES_PORT)/$(POSTGRES_DB)"
+          - name: QUEUE_URI
+            value: amqp://$(RABBITMQ_USER):$(RABBITMQ_PASSWORD)@host.minikube.internal:$(RABBITMQ_PORT)/
+          - name: READY_FILE
+            value: "/tmp/ready"
+          - name: HEARTBEAT_FILE
+            value: "/tmp/health"
+          - name: HEARTBEAT_PERIOD
+            value: "5s"
+          envFrom:
+          - secretRef:
+              name: calendar-secret
+          - configMapRef:
+              name: calendar-config
+          volumeMounts:
+          - name: calendar-app-data
+            mountPath: /etc/sender/config.yaml
+            subPath: hw12_13_14_15_calendar/configs/sender_config.yaml
+          readinessProbe: # проверка того, что создан файл
+            exec:
+              command:
+              - cat
+              - /tmp/ready
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe: # проверка того, что метка времени в файле обновляется не реже 60 секунд
+            exec:
+              command:
+              - sh
+              - -c
+              - "if [ $(date +%s) -lt $(($(cat /tmp/health)+60)) ]; then exit 0; else exit 1; fi"
+            initialDelaySeconds: 3
+            periodSeconds: 10
+      restartPolicy: Always
+      volumes:
+      - name: calendar-app-data
+        emptyDir: {}

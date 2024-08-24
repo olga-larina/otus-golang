@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar
+  namespace: apps
+  labels:
+    app: calendar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calendar
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: calendar
+    spec:
+      initContainers:
+      - name: calendar-clone-repo
+        image: alpine/git:2.45.2
+        command: ["/bin/sh", "-c", "rm -rf /app/* && git clone https://github.com/olga-larina/otus-golang.git /app"]
+        volumeMounts:
+        - name: calendar-app-data
+          mountPath: /app
+      - name: calendar-migrator
+        image: calendar_migrator:develop # образ загружен в миникуб через minikube image load {imageName}
+        env:
+        - name: DB_URI
+          value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@host.minikube.internal:$(POSTGRES_PORT)/$(POSTGRES_DB)"
+        envFrom:
+        - secretRef:
+            name: calendar-secret
+        - configMapRef:
+            name: calendar-config
+        volumeMounts:
+        - name: calendar-app-data
+          mountPath: /app/migrations
+          subPath: hw12_13_14_15_calendar/migrations
+      containers:
+        - name: calendar
+          image: calendar:develop # образ загружен в миникуб через minikube image load {imageName}
+          env:
+          - name: DB_URI
+            value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@host.minikube.internal:$(POSTGRES_PORT)/$(POSTGRES_DB)"
+          - name: SERVICE_NAME
+            value: "calendar-app"
+          envFrom:
+          - secretRef:
+              name: calendar-secret
+          - configMapRef:
+              name: calendar-config
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 8081
+              protocol: TCP
+          volumeMounts:
+          - name: calendar-app-data
+            mountPath: /etc/calendar/config.yaml
+            subPath: hw12_13_14_15_calendar/configs/calendar_config.yaml
+          readinessProbe:
+            grpc:
+              port: 8081
+              service: "calendar-app"
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            grpc:
+              port: 8081
+              service: "calendar-app"
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            failureThreshold: 3
+      restartPolicy: Always
+      volumes:
+      - name: calendar-app-data
+        emptyDir: {}

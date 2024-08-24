@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/health"
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/logger"
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/queue/rabbit"
 	"github.com/olga-larina/otus-golang/hw12_13_14_15_calendar/internal/scheduler"
@@ -88,6 +89,11 @@ func main() {
 
 	if err := scheduler.Start(ctx); err != nil {
 		logg.Error(ctx, err, "scheduler failed to start")
+		return
+	}
+
+	if err = health.FileHealthcheck(ctx, logg); err != nil {
+		logg.Error(ctx, err, "healthcheck failed to start")
 		return
 	}
 

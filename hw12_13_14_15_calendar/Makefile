@@ -7,6 +7,8 @@ DOCKER_IMG_SCHEDULER="calendar_scheduler:develop"
 BIN_SENDER := "./bin/calendar_sender"
 DOCKER_IMG_SENDER="calendar_sender:develop"
 
+DOCKER_IMG_MIGRATOR="calendar_migrator:develop"
+
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
@@ -38,6 +40,14 @@ run_scheduler: build_scheduler
 .PHONY: run_sender
 run_sender: build_sender
 	$(BIN_SENDER) -config ./configs/sender_config.yaml
+
+# собрать образ миграций
+.PHONY: build-img-migrator
+build-img-migrator:
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG_MIGRATOR) \
+		-f build/migrator/Dockerfile .
 
 # собрать все образы
 .PHONY: build-img
@@ -100,15 +110,25 @@ migrate-down:
 generate: 
 	go generate ./...
 
+# поднять окружение
+.PHONY: up-infra
+up-infra:
+	docker compose --env-file deployments/.env -f deployments/docker-compose-infra.yaml up -d
+
+# потушить окружение
+.PHONY: down-infra
+down-infra:
+	docker compose --env-file deployments/.env -f deployments/docker-compose-infra.yaml down
+
 # поднять сервисы и окружение
 .PHONY: up
 up:
-	docker compose --env-file deployments/.env -f deployments/docker-compose.yaml up -d --build
+	docker compose --env-file deployments/.env -f deployments/docker-compose-infra.yaml -f deployments/docker-compose.yaml up -d --build
 
 # потушить сервисы и окружение
 .PHONY: down
 down:
-	docker compose --env-file deployments/.env -f deployments/docker-compose.yaml down
+	docker compose --env-file deployments/.env -f deployments/docker-compose-infra.yaml -f deployments/docker-compose.yaml down
 
 # запустить интеграционные тесты
 .PHONY: integration-tests
